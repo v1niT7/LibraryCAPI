@@ -1,4 +1,5 @@
 ﻿using Library.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Library.Routes;
 
@@ -10,12 +11,64 @@ public static class LibraryRoute
     public static void LibraryRoutes(this WebApplication app)
     {
         var route = app.MapGroup("person");
-        route.MapPost("", async (BookRequest request, LibraryContext context) =>
+        // async indica que o metodo é assincrono
+        route.MapPost("criar", async (BookRequest request, LibraryContext context) =>
         {
-            var book = new Book(request.Title, request.Author, request.YearPublication, request.Gender, request.Price,
+            var book = new Book(request.Title, request.Author, request.PublicationYear, request.Gender, request.Price,
                 request.ImageUrl);
+            //await é para reforçar que o metodo é assincrono
             await context.AddAsync(book);
+            // commit
             await context.SaveChangesAsync();
+        });
+        route.MapGet("listar", async (LibraryContext context) =>
+        {
+            var books = await context.Books.ToListAsync();
+            if (books.Count == 0)
+            {
+                return Results.NotFound();
+            }
+            return Results.Ok(books);
+        });
+        route.MapGet("buscar/{id:guid}", async (Guid id, LibraryContext context) =>
+        {
+            var book = await context.Books.FirstOrDefaultAsync(b => b.Id == id);
+            if (book == null)
+            {
+                return Results.NotFound();
+            }
+            return Results.Ok(book);
+        });
+        route.MapPut("atualizar/{id:guid}", async (Guid id, BookRequest request, LibraryContext context) =>
+        {
+            // O metodo FirstOrDefaultAsync retorna um Book ou nulo se nao encontrar e nao gera excecao
+            var book = await context.Books.FirstOrDefaultAsync(b => b.Id == id);
+            if (book == null)
+            {
+                return Results.NotFound();
+            }
+            book.Title = request.Title;
+            book.Author = request.Author;
+            book.PublicationYear = request.PublicationYear;
+            book.Gender = request.Gender;
+            book.Price = request.Price;
+            book.ImageUrl = request.ImageUrl;
+            // commit
+            await context.SaveChangesAsync();
+            return Results.NoContent();
+        });
+        route.MapDelete("deletar/{id:guid}", async (Guid id, LibraryContext context) =>
+        {
+            var book = await context.Books.FirstOrDefaultAsync(b => b.Id == id);
+            if (book == null)
+            {
+                return Results.NotFound();
+            }
+
+            context.Books.Remove(book);
+            // commit
+            await context.SaveChangesAsync();
+            return Results.NoContent();
         });
     }
 }
