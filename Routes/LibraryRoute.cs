@@ -11,16 +11,6 @@ public static class LibraryRoute
     public static void LibraryRoutes(this WebApplication app)
     {
         var route = app.MapGroup("person");
-        // async indica que o metodo é assincrono
-        route.MapPost("criar", async (BookRequest request, LibraryContext context) =>
-        {
-            var book = new Book(request.Title, request.Author, request.PublicationYear, request.Gender, request.Price,
-                request.ImageUrl);
-            //await é para reforçar que o metodo é assincrono
-            await context.AddAsync(book);
-            // commit
-            await context.SaveChangesAsync();
-        });
         route.MapGet("listar", async (LibraryContext context) =>
         {
             var books = await context.Books.ToListAsync();
@@ -38,6 +28,16 @@ public static class LibraryRoute
                 return Results.NotFound();
             }
             return Results.Ok(book);
+        });
+        // async indica que o metodo é assincrono
+        route.MapPost("criar", async (BookRequest request, LibraryContext context) =>
+        {
+            var book = new Book(request.Title, request.Author, request.PublicationYear, request.Gender, request.Price,
+                request.ImageUrl);
+            //await é para reforçar que o metodo é assincrono
+            await context.AddAsync(book);
+            // commit
+            await context.SaveChangesAsync();
         });
         route.MapPut("atualizar/{id:guid}", async (Guid id, BookRequest request, LibraryContext context) =>
         {
@@ -57,6 +57,19 @@ public static class LibraryRoute
             await context.SaveChangesAsync();
             return Results.NoContent();
         });
+        route.MapPatch("/atualizar/preco/{id:guid}",
+            async (Guid id,double price, LibraryContext context) =>
+            {
+                var book = await context.Books.FirstOrDefaultAsync(b => b.Id == id);
+                if (book == null)
+                {
+                    return Results.NotFound();
+                }
+                book.Price = price;
+                // commit
+                await context.SaveChangesAsync();
+                return Results.NoContent();
+            });
         route.MapDelete("deletar/{id:guid}", async (Guid id, LibraryContext context) =>
         {
             var book = await context.Books.FirstOrDefaultAsync(b => b.Id == id);
