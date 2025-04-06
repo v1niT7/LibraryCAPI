@@ -7,12 +7,11 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Copia o .csproj e faz o restore
-COPY Library/Library.csproj ./Library/
-RUN dotnet restore ./Library/Library.csproj
+COPY Library.csproj ./
+RUN dotnet restore ./Library.csproj
 
 # Copia o conteúdo do projeto
-COPY Library/ ./Library/
-WORKDIR /src/Library
+COPY . ./
 RUN dotnet publish -c Release -o /app/publish
 
 # Fase final
