@@ -10,7 +10,7 @@ public static class LibraryRoute
     // this antes do tipo de objeto diz que é metodo de extensão
     public static void LibraryRoutes(this WebApplication app)
     {
-        var route = app.MapGroup("person");
+        var route = app.MapGroup("books");
         route.MapGet("listar", async (LibraryContext context) =>
         {
             var books = await context.Books.ToListAsync();
